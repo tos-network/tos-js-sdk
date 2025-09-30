@@ -1,0 +1,22 @@
+import { to } from 'await-to-js'
+
+import { LOCAL_WALLET_WS } from '../config'
+import WalletWS from './websocket'
+
+const RUN_WALLET_WS_TESTS = process.env.RUN_TOS_WALLET_WS_TESTS === 'true'
+const describeWalletWS = RUN_WALLET_WS_TESTS ? describe : describe.skip
+
+describeWalletWS('WalletWS', () => {
+  test('getAddress', async () => {
+    const walletWS = new WalletWS(`test`, `test`)
+    const [err] = await to(walletWS.connect(LOCAL_WALLET_WS))
+    expect(err).toBeNull()
+    const [err2, res] = await to(walletWS.methods.getAddress())
+    expect(err2).toBeNull()
+
+    console.log(res)
+    expect(res)
+
+    walletWS.close()
+  })
+})
