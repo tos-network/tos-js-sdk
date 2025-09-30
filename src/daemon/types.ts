@@ -191,12 +191,14 @@ export interface Burn {
 export interface TransactionData {
   transfers: Transfer[]
   burn: Burn
-  /*call_contract: {
+  deploy_contract?: string
+  invoke_contract?: {
     contract: string
-    // assets
-    // params
   }
-  deploy_contract: string*/
+  multi_sig?: {
+    participants: string[]
+    threshold: number
+  }
 }
 
 export interface SourceCommitment {
@@ -273,9 +275,11 @@ export interface GetAccountHistoryParams {
   asset?: string
   minimum_topoheight?: number
   maximum_topoheight?: number
+  incoming_flow?: boolean
+  outgoing_flow?: boolean
 }
 
-export interface AccounHistory {
+export interface AccountHistory {
   topoheight: number
   hash: string
   mining?: { reward: number }

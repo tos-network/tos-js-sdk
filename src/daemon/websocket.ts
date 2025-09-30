@@ -6,7 +6,7 @@ import {
   GetBalanceAtTopoheightParams, GetBalanceResult, HeightRangeParams, BlockOrdered,
   GetBalanceParams, GetAccountsParams, GetBlockAtTopoheightParams, GetBlockByHashParams,
   GetBlocksAtHeightParams, GetTopBlockParams, GetNonceParams, GetNonceResult, GetAccountHistoryParams,
-  AccounHistory, Peer, PeerPeerListUpdated, PeerPeerDisconnected, DevFee, DiskSize, AssetWithData, AssetData,
+  AccountHistory, Peer, PeerPeerListUpdated, PeerPeerDisconnected, DevFee, DiskSize, AssetWithData, AssetData,
   GetAssetParams, HasBalanceParams, HasBalanceResult, IsTxExecutedInBlockParams, BlockOrphaned, VersionedBalance,
   StableHeightChanged, HasNonceResult, HasNonceParams, TransactionResponse,
   IsAccountRegisteredParams, GetMempoolCacheResult, GetDifficultyResult, ValidateAddressParams,
@@ -20,10 +20,12 @@ import { WS as BaseWS } from '../lib/websocket'
 export class DaemonMethods {
   ws: BaseWS
   prefix: string
+  private closeListeners: Map<string, (() => Promise<void>)[]>
 
   constructor(ws: BaseWS, prefix: string = "") {
     this.ws = ws
     this.prefix = prefix
+    this.closeListeners = new Map()
   }
 
   async listenEvent<T>(event: string, onData: (msgEvent: MessageEvent, data?: T, err?: Error) => void) {
@@ -32,6 +34,31 @@ export class DaemonMethods {
 
   dataCall<T>(method: string, params?: any): Promise<T> {
     return this.ws.dataCall(this.prefix + method, params)
+  }
+
+  async listen<T>(event: string, onData: (data?: T, err?: Error) => void) {
+    const wrappedCallback = (msgEvent: MessageEvent, data?: T, err?: Error) => {
+      onData(data, err)
+    }
+    const closeListen = await this.ws.listenEvent(this.prefix + event, wrappedCallback)
+    if (!this.closeListeners.has(event)) {
+      this.closeListeners.set(event, [])
+    }
+    this.closeListeners.get(event)!.push(closeListen)
+    return closeListen
+  }
+
+  async closeListener(event: string, onData?: (data?: any, err?: Error) => void) {
+    const listeners = this.closeListeners.get(event)
+    if (listeners && listeners.length > 0) {
+      const closeListen = listeners.pop()
+      if (closeListen) {
+        await closeListen()
+      }
+      if (listeners.length === 0) {
+        this.closeListeners.delete(event)
+      }
+    }
   }
 
   onNewBlock(onData: (msgEvent: MessageEvent, data?: Block & RPCEventResult, err?: Error) => void) {
@@ -219,7 +246,7 @@ export class DaemonMethods {
   }
 
   getAccountHistory(params: GetAccountHistoryParams) {
-    return this.dataCall<AccounHistory[]>(RPCMethod.GetAccountHistory, params)
+    return this.dataCall<AccountHistory[]>(RPCMethod.GetAccountHistory, params)
   }
 
   getAccountAssets(address: string) {
@@ -277,9 +304,12 @@ export class DaemonMethods {
 
 export class WS extends BaseWS {
   methods: DaemonMethods
-  constructor() {
+  constructor(endpoint?: string) {
     super()
     this.methods = new DaemonMethods(this)
+    if (endpoint) {
+      this.connect(endpoint)
+    }
   }
 }
 

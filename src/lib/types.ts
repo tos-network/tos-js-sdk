@@ -2,7 +2,12 @@ export interface RPCRequest {
   id: number | null
   jsonrpc: string
   method: string
-  params: string
+  params?: any
+}
+
+export interface RPCBatchRequest {
+  method: string
+  params?: any
 }
 
 export interface RPCError {

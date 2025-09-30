@@ -3,6 +3,30 @@
   "name": "@tos-network/sdk",
   "description": "TOS Network software development kit for JS",
   "exports": {
+    "./react/daemon": {
+      "types": "./dist/types/react/daemon.d.ts",
+      "require": "./dist/cjs/react/daemon.js",
+      "import": "./dist/esm/react/daemon.js",
+      "default": "./dist/esm/react/daemon.js"
+    },
+    "./daemon/websocket": {
+      "types": "./dist/types/daemon/websocket.d.ts",
+      "require": "./dist/cjs/daemon/websocket.js",
+      "import": "./dist/esm/daemon/websocket.js",
+      "default": "./dist/esm/daemon/websocket.js"
+    },
+    "./daemon/types": {
+      "types": "./dist/types/daemon/types.d.ts",
+      "require": "./dist/cjs/daemon/types.js",
+      "import": "./dist/esm/daemon/types.js",
+      "default": "./dist/esm/daemon/types.js"
+    },
+    "./daemon/rpc": {
+      "types": "./dist/types/daemon/rpc.d.ts",
+      "require": "./dist/cjs/daemon/rpc.js",
+      "import": "./dist/esm/daemon/rpc.js",
+      "default": "./dist/esm/daemon/rpc.js"
+    },
     "./*": {
       "types": "./dist/types/*.d.ts",
       "require": "./dist/cjs/*.js",
@@ -33,15 +57,20 @@
     "@types/react": "^18.2.23",
     "@types/ws": "^8.5.4",
     "fix-esm-import-path": "^1.5.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "ts-jest": "^29.0.5",
     "typescript": "^4.9.5"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
   },
   "dependencies": {
     "await-to-js": "^3.0.0",
     "isomorphic-ws": "^5.0.0",
     "js-base64": "^3.7.6",
     "lossless-json": "^4.0.1",
-    "react": "^18.2.0",
     "ws": "^8.12.1"
   }
 }
