@@ -1,8 +1,7 @@
 {
-  "version": "0.9.12",
+  "version": "0.9.13",
   "name": "@tosnetwork/sdk",
   "description": "TOS Network software development kit for JS",
-  "type": "module",
   "main": "./dist/cjs/daemon/rpc.js",
   "module": "./dist/esm/daemon/rpc.js",
   "types": "./dist/types/daemon/rpc.d.ts",
