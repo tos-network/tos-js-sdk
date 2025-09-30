@@ -1,6 +1,6 @@
 {
   "version": "0.9.11",
-  "name": "@tos-network/sdk",
+  "name": "@tosnetwork/sdk",
   "description": "TOS Network software development kit for JS",
   "exports": {
     "./react/daemon": {
