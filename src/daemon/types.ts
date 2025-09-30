@@ -286,6 +286,14 @@ export interface AccountHistory {
   burn?: { amount: number }
   outgoing?: { to: string }
   incoming?: { from: string }
+  // Developer fee reward for block miners
+  dev_fee?: { reward: number }
+  // Smart contract deployment transaction
+  deploy_contract?: any
+  // Smart contract invocation with target contract address
+  invoke_contract?: { contract: string }
+  // Multi-signature transaction with participants and threshold
+  multi_sig?: { participants: string[], threshold: number }
   block_timestamp: number // in milliseconds
 }
 

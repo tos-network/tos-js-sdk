@@ -8,7 +8,7 @@ The SDK ships with handy constants for the public endpoints (`https://node.tos.n
 
 Install library with NPM.
 
-`npm i @tos-network/sdk`
+`npm i @tosnetwork/sdk`
 
 ## Usage
 
@@ -18,11 +18,11 @@ Use Daemon HTTP RPC connection.
 
 ```js
 // ESM
-import { TESTNET_NODE_RPC } from '@tos-network/sdk/config'
-import DaemonRPC from '@tos-network/sdk/daemon/rpc'
+import { TESTNET_NODE_RPC } from '@tosnetwork/sdk/config'
+import DaemonRPC from '@tosnetwork/sdk/daemon/rpc'
 // CommonJS
-// const { TESTNET_NODE_RPC } = require('@tos-network/sdk/config')
-// const { RPC: DaemonRPC } = require('@tos-network/sdk/daemon/rpc')
+// const { TESTNET_NODE_RPC } = require('@tosnetwork/sdk/config')
+// const { RPC: DaemonRPC } = require('@tosnetwork/sdk/daemon/rpc')
 
 const main = async () => {
   const daemon = new DaemonRPC(TESTNET_NODE_RPC)
@@ -37,11 +37,11 @@ Use Daemon WebSocket RPC connection.
 
 ```js
 // ESM
-import { TESTNET_NODE_WS } from '@tos-network/sdk/config.js'
-import DaemonWS from '@tos-network/sdk/daemon/websocket.js'
+import { TESTNET_NODE_WS } from '@tosnetwork/sdk/config.js'
+import DaemonWS from '@tosnetwork/sdk/daemon/websocket.js'
 // CommonJS
-// const { TESTNET_NODE_RPC } = require('@tos-network/sdk/config')
-// const { WS: DaemonWS } = require('@tos-network/sdk/daemon/websocket')
+// const { TESTNET_NODE_RPC } = require('@tosnetwork/sdk/config')
+// const { WS: DaemonWS } = require('@tosnetwork/sdk/daemon/websocket')
 
 const main = async () => {
   const daemon = new DaemonWS()
@@ -57,11 +57,11 @@ Use Wallet WebSocket RPC connection.
 
 ```js
 // ESM
-import { LOCAL_WALLET_WS } from '@tos-network/sdk/config.js'
-import DaemonWS from '@tos-network/sdk/wallet/websocket.js'
+import { LOCAL_WALLET_WS } from '@tosnetwork/sdk/config.js'
+import DaemonWS from '@tosnetwork/sdk/wallet/websocket.js'
 // CommonJS
-// const { LOCAL_WALLET_WS } = require('@tos-network/sdk/config')
-// const { WS: WalletWS } = require('@tos-network/sdk/wallet/websocket')
+// const { LOCAL_WALLET_WS } = require('@tosnetwork/sdk/config')
+// const { WS: WalletWS } = require('@tosnetwork/sdk/wallet/websocket')
 
 const main = async () => {
   const wallet = new WalletWS(`test`, `test`) // username, password
@@ -77,11 +77,11 @@ Use XSWD protocol.
 
 ```js
 // ESM
-import { LOCAL_XSWD_WS } from '@tos-network/sdk/config.js'
-import XSWD from '@tos-network/sdk/xswd/websocket.js'
+import { LOCAL_XSWD_WS } from '@tosnetwork/sdk/config.js'
+import XSWD from '@tosnetwork/sdk/xswd/websocket.js'
 // CommonJS
-// const { LOCAL_XSWD_WS } = require('@tos-network/sdk/config')
-// const { WS: XSWD } = require('@tos-network/sdk/xswd/websocket')
+// const { LOCAL_XSWD_WS } = require('@tosnetwork/sdk/config')
+// const { WS: XSWD } = require('@tosnetwork/sdk/xswd/websocket')
 
 const main = async () => {
   const xswd = new XSWD()
