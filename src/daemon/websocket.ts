@@ -21,11 +21,14 @@ export class DaemonMethods {
   ws: BaseWS
   prefix: string
   private closeListeners: Map<string, (() => Promise<void>)[]>
+  // Map event to callback-closeFn queue, supporting multiple registrations of the same callback
+  private eventCallbackMap: Map<string, Map<Function, (() => Promise<void>)[]>>
 
   constructor(ws: BaseWS, prefix: string = "") {
     this.ws = ws
     this.prefix = prefix
     this.closeListeners = new Map()
+    this.eventCallbackMap = new Map()
   }
 
   async listenEvent<T>(event: string, onData: (msgEvent: MessageEvent, data?: T, err?: Error) => void) {
@@ -41,23 +44,75 @@ export class DaemonMethods {
       onData(data, err)
     }
     const closeListen = await this.ws.listenEvent(this.prefix + event, wrappedCallback)
+
+    // Store in closeListeners array
     if (!this.closeListeners.has(event)) {
       this.closeListeners.set(event, [])
     }
     this.closeListeners.get(event)!.push(closeListen)
+
+    // Store callback-to-closeFn queue per event, supporting multiple registrations
+    if (!this.eventCallbackMap.has(event)) {
+      this.eventCallbackMap.set(event, new Map())
+    }
+    const callbackMap = this.eventCallbackMap.get(event)!
+    if (!callbackMap.has(onData)) {
+      callbackMap.set(onData, [])
+    }
+    callbackMap.get(onData)!.push(closeListen)
+
     return closeListen
   }
 
   async closeListener(event: string, onData?: (data?: any, err?: Error) => void) {
     const listeners = this.closeListeners.get(event)
-    if (listeners && listeners.length > 0) {
+    if (!listeners || listeners.length === 0) return
+
+    // If onData is provided, find and remove that specific listener for this event
+    if (onData) {
+      const callbackMap = this.eventCallbackMap.get(event)
+      if (callbackMap) {
+        const closeFnQueue = callbackMap.get(onData)
+        if (closeFnQueue && closeFnQueue.length > 0) {
+          // Pop the most recent registration (LIFO)
+          const closeFn = closeFnQueue.pop()!
+          const index = listeners.indexOf(closeFn)
+          if (index !== -1) {
+            listeners.splice(index, 1)
+            await closeFn()
+          }
+          // Clean up empty queue
+          if (closeFnQueue.length === 0) {
+            callbackMap.delete(onData)
+          }
+        }
+      }
+    } else {
+      // If no callback specified, remove the last listener (backward compatibility)
       const closeListen = listeners.pop()
       if (closeListen) {
         await closeListen()
+        // Also clean up from eventCallbackMap
+        const callbackMap = this.eventCallbackMap.get(event)
+        if (callbackMap) {
+          // Find and remove the callback associated with this closeFn
+          callbackMap.forEach((closeFnQueue, callback) => {
+            const index = closeFnQueue.indexOf(closeListen)
+            if (index !== -1) {
+              closeFnQueue.splice(index, 1)
+              if (closeFnQueue.length === 0) {
+                callbackMap.delete(callback)
+              }
+            }
+          })
+        }
       }
-      if (listeners.length === 0) {
-        this.closeListeners.delete(event)
-      }
+    }
+
+    // Clean up empty maps
+    if (listeners.length === 0) {
+      this.closeListeners.delete(event)
+      this.eventCallbackMap.delete(event)
     }
   }
 
