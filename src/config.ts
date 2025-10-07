@@ -3,7 +3,7 @@ export const WALLET_RPC_PORT = `8081`
 export const XSWD_PORT = `44325`
 
 export const MAINNET_NODE_URL = `node.tos.network`
-export const TESTNET_NODE_URL = `testnet.tos.network:${DAEMON_RPC_PORT}`
+export const TESTNET_NODE_URL = `testnode.tos.network`
 export const LOCAL_NODE_URL = `127.0.0.1:${DAEMON_RPC_PORT}`
 
 export const MAINNET_NODE_RPC = `https://${MAINNET_NODE_URL}/json_rpc`
