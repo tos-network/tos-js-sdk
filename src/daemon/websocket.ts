@@ -3,9 +3,9 @@ import { MessageEvent } from 'ws'
 import {
   Block, GetInfoResult, RPCEvent, RPCMethod, GetPeersResult,
   RPCEventResult, TopoheightRangeParams, P2PStatusResult,
-  GetBalanceAtTopoheightParams, GetBalanceResult, HeightRangeParams, BlockOrdered,
+  GetBalanceAtTopoheightParams, GetBalanceResult, BlueScoreRangeParams, BlockOrdered,
   GetBalanceParams, GetAccountsParams, GetBlockAtTopoheightParams, GetBlockByHashParams,
-  GetBlocksAtHeightParams, GetTopBlockParams, GetNonceParams, GetNonceResult, GetAccountHistoryParams,
+  GetBlocksAtBlueScoreParams, GetTopBlockParams, GetNonceParams, GetNonceResult, GetAccountHistoryParams,
   AccountHistory, Peer, PeerPeerListUpdated, PeerPeerDisconnected, DevFee, DiskSize, AssetWithData, AssetData,
   GetAssetParams, HasBalanceParams, HasBalanceResult, IsTxExecutedInBlockParams, BlockOrphaned, VersionedBalance,
   StableHeightChanged, HasNonceResult, HasNonceParams, TransactionResponse,
@@ -172,7 +172,7 @@ export class DaemonMethods {
     return this.dataCall<string>(RPCMethod.GetVersion)
   }
 
-  getHeight() {
+  getBlueScore() {
     return this.dataCall<number>(RPCMethod.GetHeight)
   }
 
@@ -180,7 +180,7 @@ export class DaemonMethods {
     return this.dataCall<number>(RPCMethod.GetTopoheight)
   }
 
-  getStableHeight() {
+  getStableBlueScore() {
     return this.dataCall<number>(RPCMethod.GetStableHeight)
   }
 
@@ -200,7 +200,7 @@ export class DaemonMethods {
     return this.dataCall<Block>(RPCMethod.GetBlockAtTopoheight, params)
   }
 
-  getBlocksAtHeight(params: GetBlocksAtHeightParams) {
+  getBlocksAtBlueScore(params: GetBlocksAtBlueScoreParams) {
     return this.dataCall<Block[]>(RPCMethod.GetBlocksAtHeight, params)
   }
 
@@ -292,7 +292,7 @@ export class DaemonMethods {
     return this.dataCall<Block[]>(RPCMethod.GetBlocksRangeByTopoheight, params)
   }
 
-  getBlocksRangeByHeight(params: HeightRangeParams) {
+  getBlocksRangeByBlueScore(params: BlueScoreRangeParams) {
     return this.dataCall<Block[]>(RPCMethod.GetBlocksRangeByHeight, params)
   }
 

@@ -1,18 +1,32 @@
 export interface GetInfoResult {
-  average_block_time: number
-  block_reward: number
-  block_time_target: number // in seconds
-  circulating_supply: number
-  difficulty: string
-  height: number
+  // GHOSTDAG consensus metrics
+  blue_score: number // Current DAG depth (number of blue blocks)
+  topoheight: number
+  stable_blue_score: number // Confirmed DAG depth
+  pruned_topoheight?: number
+  top_block_hash: string
+
+  // Supply metrics
+  circulating_supply: number // emitted_supply - burned_supply
+  burned_supply: number // Total burned TOS
+  emitted_supply: number // Total emitted TOS
   maximum_supply: number
+
+  // Mining and difficulty
+  difficulty: string
+  block_time_target: number // in milliseconds
+  average_block_time: number // in milliseconds
+  bps: number // Target blocks per second
+  actual_bps: number // Actual blocks per second
+  block_reward: number
+  dev_reward: number
+  miner_reward: number
+
+  // Network state
   mempool_size: number
   network: string
-  pruned_topoheight?: number
-  stableheight: number
-  top_block_hash: string
-  topoheight: number
   version: string
+  block_version: number
 }
 
 export interface Block {
@@ -30,7 +44,7 @@ export interface Block {
   version: number
   tips: string[]
   timestamp: number // in milliseconds
-  height: number
+  blue_score: number // DAG depth (number of blue blocks in GHOSTDAG past set)
   nonce: string
   extra_nonce: string
   miner: string
@@ -112,9 +126,9 @@ export interface TopoheightRangeParams {
   end_topoheight?: number
 }
 
-export interface HeightRangeParams {
-  start_height?: number
-  end_height?: number
+export interface BlueScoreRangeParams {
+  start_blue_score?: number
+  end_blue_score?: number
 }
 
 export interface RPCEventResult {
@@ -256,8 +270,8 @@ export interface GetBlockAtTopoheightParams {
   include_txs?: boolean
 }
 
-export interface GetBlocksAtHeightParams {
-  height: number
+export interface GetBlocksAtBlueScoreParams {
+  blue_score: number
   include_txs?: boolean
 }
 
@@ -439,14 +453,19 @@ export interface SplitAddressResult {
 export enum RPCMethod {
   GetVersion = 'get_version',
   GetInfo = 'get_info',
-  GetHeight = 'get_height',
+  // FIXED: Changed from 'get_height' to 'get_blue_score' to match daemon API
+  // The daemon uses GHOSTDAG consensus where blue_score represents the DAG depth
+  GetHeight = 'get_blue_score',
   GetTopoheight = 'get_topoheight',
-  GetStableHeight = 'get_stable_height',
+  // NOTE: get_stableheight is deprecated in daemon, but still supported for backward compatibility
+  // The preferred method is get_stable_blue_score
+  GetStableHeight = 'get_stable_blue_score',
   GetStableTopoheight = 'get_stable_topoheight',
   GetStableBalance = 'get_stable_balance',
   GetBlockTemplate = 'get_block_template',
   GetBlockAtTopoheight = 'get_block_at_topoheight',
-  GetBlocksAtHeight = 'get_blocks_at_height',
+  // FIXED: Changed from 'get_blocks_at_height' to 'get_blocks_at_blue_score'
+  GetBlocksAtHeight = 'get_blocks_at_blue_score',
   GetBlockByHash = 'get_block_by_hash',
   GetTopBlock = 'get_top_block',
   GetNonce = 'get_nonce',
@@ -466,7 +485,8 @@ export enum RPCMethod {
   GetTransaction = 'get_transaction',
   GetTransactions = 'get_transactions',
   GetBlocksRangeByTopoheight = 'get_blocks_range_by_topoheight',
-  GetBlocksRangeByHeight = 'get_blocks_range_by_height',
+  // FIXED: Changed from 'get_blocks_range_by_height' to 'get_blocks_range_by_blue_score'
+  GetBlocksRangeByHeight = 'get_blocks_range_by_blue_score',
   GetAccounts = 'get_accounts',
   SubmitBlock = 'submit_block',
   SubmitTransaction = 'submit_transaction',

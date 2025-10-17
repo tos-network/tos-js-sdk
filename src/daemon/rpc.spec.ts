@@ -33,8 +33,8 @@ describeDaemon('DaemonRPC', () => {
     expect(res)
   })
 
-  test(`getHeight`, async () => {
-    const [err, res] = await to(testnetDaemonRPC.getHeight())
+  test(`getBlueScore`, async () => {
+    const [err, res] = await to(testnetDaemonRPC.getBlueScore())
     expect(err).toBeNull()
     console.log(res)
     expect(res)
@@ -47,8 +47,8 @@ describeDaemon('DaemonRPC', () => {
     expect(res)
   })
 
-  test(`getStableHeight`, async () => {
-    const [err, res] = await to(testnetDaemonRPC.getStableHeight())
+  test(`getStableBlueScore`, async () => {
+    const [err, res] = await to(testnetDaemonRPC.getStableBlueScore())
     expect(err).toBeNull()
     console.log(res)
     expect(res)
@@ -87,9 +87,9 @@ describeDaemon('DaemonRPC', () => {
     expect(res)
   })
 
-  test('getBlocksAtHeight', async () => {
-    const [err, res] = await to(testnetDaemonRPC.getBlocksAtHeight({
-      height: 0
+  test('getBlocksAtBlueScore', async () => {
+    const [err, res] = await to(testnetDaemonRPC.getBlocksAtBlueScore({
+      blue_score: 0
     }))
     expect(err).toBeNull()
     console.log(res)
@@ -261,10 +261,10 @@ describeDaemon('DaemonRPC', () => {
     expect(res)
   })
 
-  test('getBlocksRangeByHeight', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getBlocksRangeByHeight({
-      start_height: 0,
-      end_height: 10
+  test('getBlocksRangeByBlueScore', async () => {
+    const [err, res] = await to(mainnetDaemonRPC.getBlocksRangeByBlueScore({
+      start_blue_score: 0,
+      end_blue_score: 10
     }))
     expect(err).toBeNull()
     console.log(res)
@@ -393,7 +393,7 @@ describeDaemon('DaemonRPC', () => {
     expect(err1).toBeNull()
 
     const [err2, res2] = await to(testnetDaemonRPC.getMinerWork({
-      template: res1?.result.template!
+      template: res1?.template!
     }))
     expect(err2).toBeNull()
     console.log(res2)

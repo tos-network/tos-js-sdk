@@ -2,7 +2,21 @@
 
 TOS Network software development kit for JavaScript.
 
+**Version 0.9.18** - Updated to align with daemon GHOSTDAG consensus API endpoints.
+
 The SDK ships with handy constants for the public endpoints (`https://node.tos.network/json_rpc` for mainnet and `https://testnet.tos.network/json_rpc` for testnet) as well as the local defaults on `127.0.0.1`.
+
+## 📋 What's New in v0.9.18
+
+Version 0.9.18 updates the internal RPC method mappings to align with the daemon's GHOSTDAG consensus API changes:
+
+**Internal Changes:**
+- SDK now calls `get_blue_score` instead of `get_height`
+- SDK now calls `get_stable_blue_score` instead of `get_stableheight`
+- SDK now calls `get_blocks_at_blue_score` instead of `get_blocks_at_height`
+- SDK now calls `get_blocks_range_by_blue_score` instead of `get_blocks_range_by_height`
+
+See [CHANGELOG.md](./CHANGELOG.md) for complete details.
 
 ## Install
 
@@ -26,8 +40,18 @@ import DaemonRPC from '@tosnetwork/sdk/daemon/rpc'
 
 const main = async () => {
   const daemon = new DaemonRPC(TESTNET_NODE_RPC)
+
+  // Get network info
   const info = await daemon.getInfo()
-  console.log(info)
+  console.log('Blue Score:', info.blue_score)
+  console.log('Stable Blue Score:', info.stable_blue_score)
+
+  // Get blocks at specific blue score
+  const blocks = await daemon.getBlocksAtBlueScore({
+    blue_score: 1000,
+    include_txs: false
+  })
+  console.log('Blocks:', blocks)
 }
 
 main()
@@ -98,6 +122,6 @@ main()
 ## Tests
 
 To run single test function, use jest or npm script.
-`jest -t <describe> <test>`  
+`jest -t <describe> <test>`
 
 Ex: `jest -t "DaemonRPC getInfo"` or `npm run test-func "DaemonRPC getInfo"`
