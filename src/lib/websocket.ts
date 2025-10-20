@@ -21,6 +21,15 @@ export class WS {
   maxConnectionTries: number
   options?: ClientOptions | ClientRequestArgs
 
+  // Reconnection state
+  private reconnectAttempts = 0
+  private reconnectTimeoutId?: any
+  private maxReconnectDelay = 30000  // 30 seconds
+  private baseReconnectDelay = 1000  // 1 second
+  private isAutoReconnecting = false
+  private hasConnectedOnce = false
+  private currentConnectionType: 'manual' | 'auto' = 'manual'
+
   connectionTries = 0
   methodIdIncrement = 0
 
@@ -31,63 +40,242 @@ export class WS {
     this.timeout = 15000 // default to 15s
     this.events = {}
     this.unsubscribeSuspense = 1000
-    this.maxConnectionTries = 3
+    this.maxConnectionTries = -1  // -1 = infinite retries
     this.reconnectOnConnectionLoss = true
     this.options = options
   }
 
-  connect(endpoint: string) {
-    // force disconnect if already connected
-    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      this.socket.close()
+  connect(endpoint: string, isAutoReconnect: boolean = false): Promise<Event> {
+    // Cancel any pending auto-reconnection
+    if (this.reconnectTimeoutId) {
+      clearTimeout(this.reconnectTimeoutId)
+      this.reconnectTimeoutId = undefined
     }
 
-    this.events = {}
+    // Determine connection type
+    this.currentConnectionType = isAutoReconnect ? 'auto' : 'manual'
+
+    // Only reset events on endpoint change OR manual reconnect
+    const isEndpointChange = this.endpoint !== endpoint
+    const isManualReconnect = !isAutoReconnect && this.endpoint === endpoint
+
+    if (isEndpointChange || isManualReconnect) {
+      console.log('Resetting connection state', { isEndpointChange, isManualReconnect })
+      this.events = {}
+    }
+
+    // Capture old socket before overwriting
+    const oldSocket = this.socket
+
+    // Close existing connection if open
+    if (oldSocket && oldSocket.readyState === WebSocket.OPEN) {
+      // Temporarily disable auto-reconnect for intentional close
+      const wasReconnectEnabled = this.reconnectOnConnectionLoss
+      this.reconnectOnConnectionLoss = false
+
+      oldSocket.close()
+
+      // Re-enable after brief delay
+      setTimeout(() => {
+        this.reconnectOnConnectionLoss = wasReconnectEnabled
+      }, 100)
+    }
+
     this.connectionTries = 0
+    this.endpoint = endpoint
+
     return new Promise((resolve, reject) => {
-      this.socket = new WebSocket(endpoint, this.options)
-      this.endpoint = endpoint
+      // Bind resolvers to this socket's closure, not instance
+      const resolvers = { resolve, reject }
 
-      this.socket.addEventListener(`open`, (event) => {
-        resolve(event)
-      })
+      // Capture socket in local variable
+      const socket = new WebSocket(endpoint, this.options)
+      this.socket = socket  // Update instance for other methods
 
-      this.socket.addEventListener(`close`, (event) => {
-        if (this.reconnectOnConnectionLoss && !event.wasClean) {
-          this.tryReconnect()
-          reject(new Error(`Unhandled close. Reconnecting...`))
-        } else {
-          reject(event)
+      // Track if this socket should reset hasConnectedOnce
+      const shouldResetConnectionFlag = isEndpointChange || isManualReconnect
+
+      // Setup one-time handlers
+      const openHandler = (event: Event) => {
+        console.log('WebSocket opened')
+
+        // Only set hasConnectedOnce for this socket if it's current
+        if (this.socket === socket) {
+          this.hasConnectedOnce = true
         }
-      })
 
-      this.socket.addEventListener(`error`, (err) => {
-        reject(err)
-      })
+        this.reconnectAttempts = 0
+        this.isAutoReconnecting = false
+
+        // Cleanup
+        cleanup()
+
+        resolvers.resolve(event)
+      }
+
+      const closeHandler = (event: CloseEvent) => {
+        console.log('WebSocket closed', event.code, event.reason, {
+          hasConnectedOnce: this.hasConnectedOnce,
+          isAutoReconnecting: this.isAutoReconnecting,
+          connectionType: this.currentConnectionType,
+          isCurrentSocket: this.socket === socket
+        })
+
+        // Cleanup handlers
+        cleanup()
+
+        // Only process this close if it's from the current socket
+        if (this.socket !== socket) {
+          console.log('Close event from old socket, ignoring')
+          // If this was a manual reconnect that needed flag reset, do it now
+          if (shouldResetConnectionFlag) {
+            this.hasConnectedOnce = false
+          }
+          return
+        }
+
+        // Decide what to do based on connection state
+        const shouldReject = !this.hasConnectedOnce  // Never connected successfully
+        const shouldAutoReconnect = this.hasConnectedOnce &&
+                                    this.reconnectOnConnectionLoss &&
+                                    !this.isAutoReconnecting
+
+        if (shouldReject) {
+          // Initial/manual connection failed
+          const error = new Error(`Connection failed: ${event.reason || event.code}`)
+          resolvers.reject(error)
+          this.isAutoReconnecting = false  // Ensure state is clean
+        } else if (shouldAutoReconnect) {
+          // Established connection dropped, schedule auto-reconnect
+          this.scheduleReconnect()
+        } else {
+          // Auto-reconnect attempt failed
+          console.log('Auto-reconnect attempt failed, will retry')
+          this.isAutoReconnecting = false  // Reset to allow next attempt
+        }
+      }
+
+      const errorHandler = (err: Event) => {
+        console.error('WebSocket error', err)
+
+        // Use local resolvers
+        const error = new Error('WebSocket connection error')
+        resolvers.reject(error)
+
+        cleanup()
+      }
+
+      // Cleanup function using local socket reference
+      const cleanup = () => {
+        socket.removeEventListener('open', openHandler as any)
+        socket.removeEventListener('close', closeHandler as any)
+        socket.removeEventListener('error', errorHandler as any)
+      }
+
+      // Register handlers on local socket
+      socket.addEventListener('open', openHandler as any)
+      socket.addEventListener('close', closeHandler as any)
+      socket.addEventListener('error', errorHandler as any)
     })
   }
 
-  tryReconnect() {
-    this.connectionTries++
+  // Calculate exponential backoff with jitter
+  private calculateReconnectDelay(): number {
+    const exponentialDelay = Math.min(
+      this.maxReconnectDelay,
+      this.baseReconnectDelay * Math.pow(2, this.reconnectAttempts)
+    )
 
-    if (this.connectionTries > this.maxConnectionTries) {
+    // Add jitter (±25% randomization)
+    const jitter = exponentialDelay * 0.25 * (Math.random() - 0.5)
+    return exponentialDelay + jitter
+  }
+
+  // Schedule reconnection with exponential backoff
+  private scheduleReconnect() {
+    if (this.isAutoReconnecting) return
+    if (this.maxConnectionTries > 0 && this.reconnectAttempts >= this.maxConnectionTries) {
+      console.error('Max reconnection attempts reached')
       return
     }
 
-    this.socket = new WebSocket(this.endpoint, this.options)
+    this.isAutoReconnecting = true
+    const delay = this.calculateReconnectDelay()
 
-    this.socket.addEventListener(`open`, () => {
-      this.connectionTries = 0
-    })
+    console.log(`Scheduling reconnect in ${delay}ms (attempt ${this.reconnectAttempts + 1})`)
 
-    this.socket.addEventListener(`close`, (event) => {
-      this.tryReconnect()
-    })
+    this.reconnectTimeoutId = setTimeout(async () => {
+      this.reconnectAttempts++
+
+      try {
+        // This connect() call will NOT reset events (same endpoint, isAutoReconnect=true)
+        await this.connect(this.endpoint, true)
+
+        // Resubscribe to all events after successful reconnection
+        await this.resubscribeAllEvents()
+
+        console.log('Successfully reconnected and resubscribed to events')
+      } catch (err) {
+        console.error('Reconnection failed', err)
+        this.isAutoReconnecting = false  // Allow next attempt
+        // Will automatically schedule next attempt via close handler
+      }
+    }, delay)
+  }
+
+  // Resubscribe to all active events after reconnection
+  private async resubscribeAllEvents() {
+    const eventNames = Object.keys(this.events)
+    console.log(`Resubscribing to ${eventNames.length} events`)
+
+    for (const eventName of eventNames) {
+      try {
+        const res = await this.call<boolean>(`subscribe`, { notify: eventName })
+        this.events[eventName].id = res.id
+
+        // Reattach all listeners to the new socket
+        const listeners = this.events[eventName].listeners
+        for (const listener of listeners) {
+          this.socket && this.socket.addEventListener(`message`, listener)
+        }
+      } catch (err) {
+        console.error(`Failed to resubscribe to ${eventName}`, err)
+      }
+    }
   }
 
   close() {
     if (!this.socket) return
+
+    // Cancel any pending reconnection
+    if (this.reconnectTimeoutId) {
+      clearTimeout(this.reconnectTimeoutId)
+      this.reconnectTimeoutId = undefined
+    }
+
+    // Temporarily disable auto-reconnect to prevent this intentional close from triggering reconnection
+    const wasReconnectEnabled = this.reconnectOnConnectionLoss
+    this.reconnectOnConnectionLoss = false
+
     this.socket.close()
+
+    // Re-enable after brief delay
+    setTimeout(() => {
+      this.reconnectOnConnectionLoss = wasReconnectEnabled
+    }, 100)
+  }
+
+  // Get current connection state
+  getConnectionState(): {
+    connected: boolean
+    reconnecting: boolean
+    attempts: number
+  } {
+    return {
+      connected: this.socket?.readyState === WebSocket.OPEN,
+      reconnecting: this.isAutoReconnecting,
+      attempts: this.reconnectAttempts
+    }
   }
 
   private clearEvent(event: string) {
