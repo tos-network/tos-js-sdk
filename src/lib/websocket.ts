@@ -60,7 +60,6 @@ export class WS {
     const isManualReconnect = !isAutoReconnect && this.endpoint === endpoint
 
     if (isEndpointChange || isManualReconnect) {
-      console.log('Resetting connection state', { isEndpointChange, isManualReconnect })
       this.events = {}
     }
 
@@ -87,6 +86,18 @@ export class WS {
     return new Promise((resolve, reject) => {
       // Bind resolvers to this socket's closure, not instance
       const resolvers = { resolve, reject }
+      let isSettled = false
+      const resolveOnce = (event: Event) => {
+        if (isSettled) return
+        isSettled = true
+        resolvers.resolve(event)
+      }
+      const rejectOnce = (error: Error) => {
+        if (isSettled) return false
+        isSettled = true
+        resolvers.reject(error)
+        return true
+      }
 
       // Capture socket in local variable
       const socket = new WebSocket(endpoint, this.options)
@@ -95,9 +106,14 @@ export class WS {
       // Track if this socket should reset hasConnectedOnce
       const shouldResetConnectionFlag = isEndpointChange || isManualReconnect
 
-      // Setup one-time handlers
+      // FIX #9: Track if THIS specific socket ever opened (per-socket flag)
+      let socketOpened = false
+      let errorScheduledRetry = false
+
+      // Setup handlers
       const openHandler = (event: Event) => {
-        console.log('WebSocket opened')
+        // FIX #9: Mark THIS socket as opened
+        socketOpened = true
 
         // Only set hasConnectedOnce for this socket if it's current
         if (this.socket === socket) {
@@ -107,69 +123,74 @@ export class WS {
         this.reconnectAttempts = 0
         this.isAutoReconnecting = false
 
-        // Cleanup
-        cleanup()
+        // FIX #8: Only cleanup open and error handlers, keep close handler alive
+        socket.removeEventListener('open', openHandler as any)
+        socket.removeEventListener('error', errorHandler as any)
 
-        resolvers.resolve(event)
+        resolveOnce(event)
       }
 
       const closeHandler = (event: CloseEvent) => {
-        console.log('WebSocket closed', event.code, event.reason, {
-          hasConnectedOnce: this.hasConnectedOnce,
-          isAutoReconnecting: this.isAutoReconnecting,
-          connectionType: this.currentConnectionType,
-          isCurrentSocket: this.socket === socket
-        })
-
-        // Cleanup handlers
-        cleanup()
+        // Always cleanup this socket's handlers
+        socket.removeEventListener('open', openHandler as any)
+        socket.removeEventListener('close', closeHandler as any)
+        socket.removeEventListener('error', errorHandler as any)
 
         // Only process this close if it's from the current socket
         if (this.socket !== socket) {
-          console.log('Close event from old socket, ignoring')
-          // If this was a manual reconnect that needed flag reset, do it now
-          if (shouldResetConnectionFlag) {
+          // FIX #10: Only reset flag if new socket hasn't opened yet
+          if (shouldResetConnectionFlag && !this.hasConnectedOnce) {
             this.hasConnectedOnce = false
           }
           return
         }
 
-        // Decide what to do based on connection state
-        const shouldReject = !this.hasConnectedOnce  // Never connected successfully
-        const shouldAutoReconnect = this.hasConnectedOnce &&
+        // FIX #9: Use per-socket opened flag to decide behavior
+        const shouldReject = !socketOpened  // THIS socket never opened
+        const shouldAutoReconnect = socketOpened &&
                                     this.reconnectOnConnectionLoss &&
                                     !this.isAutoReconnecting
 
         if (shouldReject) {
-          // Initial/manual connection failed
+          // This socket failed to open (handshake failure)
           const error = new Error(`Connection failed: ${event.reason || event.code}`)
-          resolvers.reject(error)
-          this.isAutoReconnecting = false  // Ensure state is clean
+          rejectOnce(error)
+
+          const canRetry = isAutoReconnect && this.reconnectOnConnectionLoss
+
+          if (canRetry && !errorScheduledRetry) {
+            this.scheduleReconnect(true)
+            errorScheduledRetry = true
+          }
+
+          if (!canRetry) {
+            this.isAutoReconnecting = false  // No further retries
+          }
         } else if (shouldAutoReconnect) {
-          // Established connection dropped, schedule auto-reconnect
+          // Socket was opened but now dropped, schedule auto-reconnect
           this.scheduleReconnect()
         } else {
-          // Auto-reconnect attempt failed
-          console.log('Auto-reconnect attempt failed, will retry')
-          this.isAutoReconnecting = false  // Reset to allow next attempt
+          // Intentional close or reconnect disabled
+          this.isAutoReconnecting = false  // Ensure state is clean
         }
       }
 
       const errorHandler = (err: Event) => {
         console.error('WebSocket error', err)
 
-        // Use local resolvers
-        const error = new Error('WebSocket connection error')
-        resolvers.reject(error)
-
-        cleanup()
-      }
-
-      // Cleanup function using local socket reference
-      const cleanup = () => {
-        socket.removeEventListener('open', openHandler as any)
-        socket.removeEventListener('close', closeHandler as any)
+        // Remove error handler to avoid repeated logs, leave close handler active
         socket.removeEventListener('error', errorHandler as any)
+        socket.removeEventListener('open', openHandler as any)
+
+        if (!socketOpened) {
+          const error = new Error('WebSocket connection error')
+          const rejectedHere = rejectOnce(error)
+
+          if (rejectedHere && isAutoReconnect && this.reconnectOnConnectionLoss) {
+            this.scheduleReconnect(true)
+            errorScheduledRetry = true
+          }
+        }
       }
 
       // Register handlers on local socket
@@ -186,25 +207,29 @@ export class WS {
       this.baseReconnectDelay * Math.pow(2, this.reconnectAttempts)
     )
 
-    // Add jitter (±25% randomization)
-    const jitter = exponentialDelay * 0.25 * (Math.random() - 0.5)
+    // Add jitter (0% - 25%)
+    const jitter = exponentialDelay * 0.25 * Math.random()
     return exponentialDelay + jitter
   }
 
   // Schedule reconnection with exponential backoff
-  private scheduleReconnect() {
-    if (this.isAutoReconnecting) return
+  private scheduleReconnect(force = false) {
+    if (this.isAutoReconnecting && !force) return
     if (this.maxConnectionTries > 0 && this.reconnectAttempts >= this.maxConnectionTries) {
       console.error('Max reconnection attempts reached')
       return
     }
 
+    if (force && this.reconnectTimeoutId) {
+      clearTimeout(this.reconnectTimeoutId)
+      this.reconnectTimeoutId = undefined
+    }
+
     this.isAutoReconnecting = true
     const delay = this.calculateReconnectDelay()
 
-    console.log(`Scheduling reconnect in ${delay}ms (attempt ${this.reconnectAttempts + 1})`)
-
     this.reconnectTimeoutId = setTimeout(async () => {
+      this.reconnectTimeoutId = undefined
       this.reconnectAttempts++
 
       try {
@@ -214,11 +239,13 @@ export class WS {
         // Resubscribe to all events after successful reconnection
         await this.resubscribeAllEvents()
 
-        console.log('Successfully reconnected and resubscribed to events')
       } catch (err) {
         console.error('Reconnection failed', err)
-        this.isAutoReconnecting = false  // Allow next attempt
-        // Will automatically schedule next attempt via close handler
+        if (!this.reconnectTimeoutId) {
+          // No further attempts scheduled (e.g., reconnect disabled)
+          this.isAutoReconnecting = false
+        }
+        // Otherwise, close/error handlers will schedule the next attempt
       }
     }, delay)
   }
@@ -226,8 +253,6 @@ export class WS {
   // Resubscribe to all active events after reconnection
   private async resubscribeAllEvents() {
     const eventNames = Object.keys(this.events)
-    console.log(`Resubscribing to ${eventNames.length} events`)
-
     for (const eventName of eventNames) {
       try {
         const res = await this.call<boolean>(`subscribe`, { notify: eventName })
