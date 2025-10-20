@@ -49,6 +49,8 @@
   "scripts": {
     "test-func": "jest -t",
     "test": "jest",
+    "test:ws": "node test/test_reconnection.js",
+    "test:ws:server": "node test/test_server.js",
     "compile": "tsc -b ./tsconfig.cjs.json ./tsconfig.esm.json ./tsconfig.types.json",
     "fix-esm": "fix-esm-import-path ./dist/esm",
     "clean": "rm -rf ./dist",
