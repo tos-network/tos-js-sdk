@@ -64,9 +64,9 @@ export interface GetBalanceAtTopoheightParams {
 }
 
 export interface GetStableBalanceResult {
+  balance: number
   stable_topoheight: number
   stable_block_hash: string
-  version: VersionedBalance
 }
 
 export interface GetNonceParams {
@@ -88,26 +88,26 @@ export interface GetNonceAtTopoheightParams {
   topoheight: number
 }
 
-export interface EncryptedBalance {
-  commitment: number[]
-  handle: number[]
-}
-
+// Balance simplification: Balances are now plaintext u64 instead of encrypted ciphertext
 export enum BalanceType {
   Input = `input`,
   Output = `output`,
   Both = `both`
 }
 
+// VersionedBalance: Used by get_balance_at_topoheight endpoint
+// Contains plaintext balances with version history
 export interface VersionedBalance {
   balance_type: BalanceType
-  final_balance: EncryptedBalance
-  output_balance?: EncryptedBalance
+  final_balance: number  // Plaintext balance (u64)
+  output_balance?: number  // Plaintext output balance (u64)
   previous_topoheight?: number
 }
 
+// GetBalanceResult: Used by get_balance endpoint
+// Returns plaintext balance and current topoheight
 export interface GetBalanceResult {
-  version: VersionedBalance
+  balance: number  // Changed from version: VersionedBalance to plaintext balance
   topoheight: number
 }
 
@@ -187,14 +187,12 @@ export interface EqProof {
   z_x: number[]
 }
 
+// Transfer: Simplified to use plaintext amount instead of encrypted ciphertext
 export interface Transfer {
   asset: string
   destination: string
+  amount: number  // Plaintext transfer amount (u64)
   extra_data?: any
-  commitment: number[]
-  sender_handle: number[]
-  receiver_handle: number[]
-  ct_validity_proof: Proof
 }
 
 export interface Burn {
@@ -215,17 +213,12 @@ export interface TransactionData {
   }
 }
 
-export interface SourceCommitment {
-  commitment: number[]
-  proof: EqProof
-  asset: string
-}
-
 export interface Reference {
   hash: string
   topoheight: number
 }
 
+// Transaction: Simplified structure without proof fields
 export interface Transaction {
   hash: string
   version: number
@@ -233,8 +226,6 @@ export interface Transaction {
   data: TransactionData
   fee: number
   nonce: number
-  source_commitments: SourceCommitment[]
-  range_proof: number[]
   signature: string
   reference: Reference
   size: number
@@ -348,11 +339,11 @@ export interface HasBalanceParams {
 }
 
 export interface HasBalanceResult {
-  exists: boolean
+  exist: boolean
 }
 
 export interface HasNonceResult {
-  exists: boolean
+  exist: boolean
 }
 
 export interface IsTxExecutedInBlockParams {
