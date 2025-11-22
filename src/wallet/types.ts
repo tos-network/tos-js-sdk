@@ -141,11 +141,19 @@ export enum Permission {
   DenyAlways = 2
 }
 
+// XSWD v2.0: Application data with Ed25519 signature authentication
+// This matches the Rust struct in wallet/src/api/xswd/types.rs
 export interface ApplicationData {
-  id: string
-  name: string
-  description: string
-  url?: string
-  permissions: Map<string, Permission>
-  signature?: string
+  // Existing fields (unchanged)
+  id: string                    // Application ID (64-char hex, derived from public_key)
+  name: string                  // Application name (max 32 chars)
+  description: string           // Application description (max 255 chars)
+  url?: string                  // Optional application URL (max 255 chars)
+  permissions: string[]         // Requested RPC method permissions (e.g., ["get_balance", "sign_transaction"])
+
+  // XSWD v2.0: Ed25519 signature fields
+  public_key: string            // Ed25519 public key (64-char hex = 32 bytes)
+  timestamp: number             // Unix timestamp in seconds (for replay protection)
+  nonce: string                 // Random nonce (16-char hex = 8 bytes, for replay protection)
+  signature: string             // Ed25519 signature (128-char hex = 64 bytes)
 }
