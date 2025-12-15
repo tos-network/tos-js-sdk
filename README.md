@@ -2,31 +2,27 @@
 
 TOS Network software development kit for JavaScript.
 
-**Version 0.9.21** - XSWD v2.0 with Ed25519 signature authentication
+**Version 0.9.22** - BlockDAG API
 
 The SDK ships with handy constants for the public endpoints (`https://node.tos.network/json_rpc` for mainnet and `https://testnet.tos.network/json_rpc` for testnet) as well as the local defaults on `127.0.0.1`.
 
-## 🔒 What's New in v0.9.21
+## 🔄 What's New in v0.9.22
 
-Version 0.9.21 introduces **XSWD v2.0** with Ed25519 signature-based application authentication:
+Version 0.9.22 updates the API to use BlockDAG terminology:
 
-**Security Improvements:**
-- ✅ **Ed25519 cryptographic signatures** for application authentication
-- ✅ **Automatic signature generation** - SDK handles all crypto automatically
-- ✅ **Replay attack prevention** via timestamps and nonces
-- ✅ **90% risk reduction** for application impersonation attacks
-
-**Developer Experience:**
-- ✅ **75% less code** - simplified from 20+ lines to just 5 lines
-- ✅ **Zero crypto knowledge required** - SDK handles keypair generation and signing
-- ✅ **Type-safe** - comprehensive TypeScript definitions
+**API Changes:**
+- `blue_score` → `height`
+- `stable_blue_score` → `stable_height`
+- `getBlueScore()` → `getHeight()`
+- `getStableBlueScore()` → `getStableHeight()`
+- `getBlocksAtBlueScore()` → `getBlocksAtHeight()`
+- `getBlocksRangeByBlueScore()` → `getBlocksRangeByHeight()`
+- `BlueScoreRangeParams` → `HeightRangeParams`
+- `GetBlocksAtBlueScoreParams` → `GetBlocksAtHeightParams`
 
 **Breaking Changes:**
-- `ApplicationData.permissions` changed from `Map<string, Permission>` to `string[]`
-- `authorize()` now accepts simplified `XSWDAppConfig` interface
-- Requires wallet with XSWD v2.0 support
-
-See [CHANGELOG.md](./CHANGELOG.md) for complete details and migration guide.
+- All `blue_score` related APIs have been renamed to use `height`
+- Applications using the old API names will need to update their code
 
 ## Install
 
@@ -53,12 +49,12 @@ const main = async () => {
 
   // Get network info
   const info = await daemon.getInfo()
-  console.log('Blue Score:', info.blue_score)
-  console.log('Stable Blue Score:', info.stable_blue_score)
+  console.log('Height:', info.height)
+  console.log('Stable Height:', info.stable_height)
 
-  // Get blocks at specific blue score
-  const blocks = await daemon.getBlocksAtBlueScore({
-    blue_score: 1000,
+  // Get blocks at specific height
+  const blocks = await daemon.getBlocksAtHeight({
+    height: 1000,
     include_txs: false
   })
   console.log('Blocks:', blocks)
