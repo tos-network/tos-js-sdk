@@ -1,10 +1,9 @@
 import { to } from 'await-to-js'
 
-import { MAINNET_NODE_RPC, TESTNET_NODE_RPC, TOS_ASSET } from '../config'
+import { TESTNET_NODE_RPC, TOS_ASSET } from '../config'
 import DaemonRPC from './rpc'
 
-const TESTNET_ADDR = process.env.TOS_TESTNET_ADDRESS ?? `tst:qsl6sj2u0gp37tr6drrq964rd4d8gnaxnezgytmt0cfltnp2wsgqqak28je`
-const MAINNET_ADDR = process.env.TOS_MAINNET_ADDRESS ?? `tos:qsl6sj2u0gp37tr6drrq964rd4d8gnaxnezgytmt0cfltnp2wsgqqak28je`
+const TESTNET_ADDR = process.env.TOS_TESTNET_ADDRESS ?? `tst1qsl6sj2u0gp37tr6drrq964rd4d8gnaxnezgytmt0cfltnp2wsgqqxxrx64`
 const SAMPLE_BLOCK_HASH = process.env.TOS_SAMPLE_BLOCK_HASH
 const SAMPLE_TX_HASH = process.env.TOS_SAMPLE_TX_HASH
 const SAMPLE_TX_BLOCK_HASH = process.env.TOS_SAMPLE_TX_BLOCK_HASH
@@ -15,8 +14,6 @@ const RUN_DAEMON_INTEGRATION = process.env.RUN_TOS_DAEMON_TESTS === 'true'
 const describeDaemon = RUN_DAEMON_INTEGRATION ? describe : describe.skip
 
 const testnetDaemonRPC = new DaemonRPC(TESTNET_NODE_RPC)
-// this node does not allow mining use testnet to tests mining funcs
-const mainnetDaemonRPC = new DaemonRPC(MAINNET_NODE_RPC)
 
 describeDaemon('DaemonRPC', () => {
   test(`getInfo`, async () => {
@@ -33,8 +30,8 @@ describeDaemon('DaemonRPC', () => {
     expect(res)
   })
 
-  test(`getBlueScore`, async () => {
-    const [err, res] = await to(testnetDaemonRPC.getBlueScore())
+  test(`getHeight`, async () => {
+    const [err, res] = await to(testnetDaemonRPC.getHeight())
     expect(err).toBeNull()
     console.log(res)
     expect(res)
@@ -47,8 +44,8 @@ describeDaemon('DaemonRPC', () => {
     expect(res)
   })
 
-  test(`getStableBlueScore`, async () => {
-    const [err, res] = await to(testnetDaemonRPC.getStableBlueScore())
+  test(`getStableHeight`, async () => {
+    const [err, res] = await to(testnetDaemonRPC.getStableHeight())
     expect(err).toBeNull()
     console.log(res)
     expect(res)
@@ -62,8 +59,8 @@ describeDaemon('DaemonRPC', () => {
   })
 
   test(`getStableBalance`, async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getStableBalance({
-      address: MAINNET_ADDR,
+    const [err, res] = await to(testnetDaemonRPC.getStableBalance({
+      address: TESTNET_ADDR,
       asset: TOS_ASSET
     }))
     expect(err).toBeNull()
@@ -87,9 +84,9 @@ describeDaemon('DaemonRPC', () => {
     expect(res)
   })
 
-  test('getBlocksAtBlueScore', async () => {
-    const [err, res] = await to(testnetDaemonRPC.getBlocksAtBlueScore({
-      blue_score: 0
+  test('getBlocksAtHeight', async () => {
+    const [err, res] = await to(testnetDaemonRPC.getBlocksAtHeight({
+      height: 0
     }))
     expect(err).toBeNull()
     console.log(res)
@@ -98,22 +95,22 @@ describeDaemon('DaemonRPC', () => {
 
   const blockByHashTest = SAMPLE_BLOCK_HASH ? test : test.skip
   blockByHashTest('getBlockByHash', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getBlockByHash({ hash: SAMPLE_BLOCK_HASH as string }))
+    const [err, res] = await to(testnetDaemonRPC.getBlockByHash({ hash: SAMPLE_BLOCK_HASH as string }))
     expect(err).toBeNull()
     console.log(res)
     expect(res)
   })
 
   test('getTopBlock', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getTopBlock())
+    const [err, res] = await to(testnetDaemonRPC.getTopBlock())
     expect(err).toBeNull()
     console.log(res)
     expect(res)
   })
 
   test('getNonce', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getNonce({
-      address: MAINNET_ADDR,
+    const [err, res] = await to(testnetDaemonRPC.getNonce({
+      address: TESTNET_ADDR,
     }))
     expect(err).toBeNull()
     console.log(res)
@@ -122,8 +119,8 @@ describeDaemon('DaemonRPC', () => {
 
   const nonceAtTopoTest = Number.isFinite(SAMPLE_TOPOHEIGHT) ? test : test.skip
   nonceAtTopoTest('getNonceAtTopoheight', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getNonceAtTopoheight({
-      address: MAINNET_ADDR,
+    const [err, res] = await to(testnetDaemonRPC.getNonceAtTopoheight({
+      address: TESTNET_ADDR,
       topoheight: SAMPLE_TOPOHEIGHT as number
     }))
     expect(err).toBeNull()
@@ -132,8 +129,8 @@ describeDaemon('DaemonRPC', () => {
   })
 
   test('hasNonce', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.hasNonce({
-      address: MAINNET_ADDR,
+    const [err, res] = await to(testnetDaemonRPC.hasNonce({
+      address: TESTNET_ADDR,
     }))
     expect(err).toBeNull()
     console.log(res)
@@ -141,8 +138,8 @@ describeDaemon('DaemonRPC', () => {
   })
 
   test('getBalance', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getBalance({
-      address: MAINNET_ADDR,
+    const [err, res] = await to(testnetDaemonRPC.getBalance({
+      address: TESTNET_ADDR,
       asset: TOS_ASSET
     }))
     expect(err).toBeNull()
@@ -151,8 +148,8 @@ describeDaemon('DaemonRPC', () => {
   })
 
   test('hasBalance', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.hasBalance({
-      address: MAINNET_ADDR,
+    const [err, res] = await to(testnetDaemonRPC.hasBalance({
+      address: TESTNET_ADDR,
       asset: TOS_ASSET
     }))
     expect(err).toBeNull()
@@ -162,8 +159,8 @@ describeDaemon('DaemonRPC', () => {
 
   const balanceAtTopoTest = Number.isFinite(SAMPLE_TOPOHEIGHT) ? test : test.skip
   balanceAtTopoTest('getBalanceAtTopoheight', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getBalanceAtTopoheight({
-      address: MAINNET_ADDR,
+    const [err, res] = await to(testnetDaemonRPC.getBalanceAtTopoheight({
+      address: TESTNET_ADDR,
       asset: TOS_ASSET,
       topoheight: SAMPLE_TOPOHEIGHT as number
     }))
@@ -173,7 +170,7 @@ describeDaemon('DaemonRPC', () => {
   })
 
   test('getAsset', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getAsset({
+    const [err, res] = await to(testnetDaemonRPC.getAsset({
       asset: TOS_ASSET
     }))
     expect(err).toBeNull()
@@ -182,7 +179,7 @@ describeDaemon('DaemonRPC', () => {
   })
 
   test('getAssets', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getAssets({
+    const [err, res] = await to(testnetDaemonRPC.getAssets({
       skip: 0,
       maximum: 10
     }))
@@ -192,42 +189,42 @@ describeDaemon('DaemonRPC', () => {
   })
 
   test('countAssets', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.countAssets())
+    const [err, res] = await to(testnetDaemonRPC.countAssets())
     expect(err).toBeNull()
     console.log(res)
     expect(res)
   })
 
   test('countTransactions', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.countTransactions())
+    const [err, res] = await to(testnetDaemonRPC.countTransactions())
     expect(err).toBeNull()
     console.log(res)
     expect(res)
   })
 
   test('getTips', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getTips())
+    const [err, res] = await to(testnetDaemonRPC.getTips())
     expect(err).toBeNull()
     console.log(res)
     expect(res)
   })
 
   test('p2pStatus', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.p2pStatus())
+    const [err, res] = await to(testnetDaemonRPC.p2pStatus())
     expect(err).toBeNull()
     console.log(res)
     expect(res)
   })
 
   test('getDAGOrder', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getDAGOrder())
+    const [err, res] = await to(testnetDaemonRPC.getDAGOrder())
     expect(err).toBeNull()
     console.log(res)
     expect(res)
   })
 
   test('getMempool', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getMemPool())
+    const [err, res] = await to(testnetDaemonRPC.getMemPool())
     expect(err).toBeNull()
     console.log(res)
     expect(res)
@@ -235,7 +232,7 @@ describeDaemon('DaemonRPC', () => {
 
   const transactionTest = SAMPLE_TX_HASH ? test : test.skip
   transactionTest('getTransaction', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getTransaction(SAMPLE_TX_HASH as string))
+    const [err, res] = await to(testnetDaemonRPC.getTransaction(SAMPLE_TX_HASH as string))
     expect(err).toBeNull()
     console.log(res)
     expect(res)
@@ -243,7 +240,7 @@ describeDaemon('DaemonRPC', () => {
 
   const transactionsTest = SAMPLE_TX_HASH ? test : test.skip
   transactionsTest('getTransactions', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getTransactions([
+    const [err, res] = await to(testnetDaemonRPC.getTransactions([
       SAMPLE_TX_HASH as string
     ]))
     expect(err).toBeNull()
@@ -252,7 +249,7 @@ describeDaemon('DaemonRPC', () => {
   })
 
   test('getBlocksRangeByTopoheight', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getBlocksRangeByTopoheight({
+    const [err, res] = await to(testnetDaemonRPC.getBlocksRangeByTopoheight({
       start_topoheight: 0,
       end_topoheight: 10
     }))
@@ -261,10 +258,10 @@ describeDaemon('DaemonRPC', () => {
     expect(res)
   })
 
-  test('getBlocksRangeByBlueScore', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getBlocksRangeByBlueScore({
-      start_blue_score: 0,
-      end_blue_score: 10
+  test('getBlocksRangeByHeight', async () => {
+    const [err, res] = await to(testnetDaemonRPC.getBlocksRangeByHeight({
+      start_height: 0,
+      end_height: 10
     }))
     expect(err).toBeNull()
     console.log(res)
@@ -272,7 +269,7 @@ describeDaemon('DaemonRPC', () => {
   })
 
   test('getAccounts', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getAccounts({
+    const [err, res] = await to(testnetDaemonRPC.getAccounts({
       skip: 0,
       maximum: 10
     }))
@@ -282,15 +279,15 @@ describeDaemon('DaemonRPC', () => {
   })
 
   test('countAccounts', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.countAccounts())
+    const [err, res] = await to(testnetDaemonRPC.countAccounts())
     expect(err).toBeNull()
     console.log(res)
     expect(res)
   })
 
   test('getAccountHistory', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getAccountHistory({
-      address: MAINNET_ADDR
+    const [err, res] = await to(testnetDaemonRPC.getAccountHistory({
+      address: TESTNET_ADDR
     }))
     expect(err).toBeNull()
     console.log(res)
@@ -298,28 +295,28 @@ describeDaemon('DaemonRPC', () => {
   })
 
   test('getAccountAssets', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getAccountAssets(MAINNET_ADDR))
+    const [err, res] = await to(testnetDaemonRPC.getAccountAssets(TESTNET_ADDR))
     expect(err).toBeNull()
     console.log(res)
     expect(res)
   })
 
   test('getPeers', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getPeers())
+    const [err, res] = await to(testnetDaemonRPC.getPeers())
     expect(err).toBeNull()
     console.log(res)
     expect(res)
   })
 
   test('getDevFeeThresholds', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getDevFeeThresholds())
+    const [err, res] = await to(testnetDaemonRPC.getDevFeeThresholds())
     expect(err).toBeNull()
     console.log(res)
     expect(res)
   })
 
   test('getSizeOnDisk', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getSizeOnDisk())
+    const [err, res] = await to(testnetDaemonRPC.getSizeOnDisk())
     expect(err).toBeNull()
     console.log(res)
     expect(res)
@@ -327,7 +324,7 @@ describeDaemon('DaemonRPC', () => {
 
   const txExecutedTest = SAMPLE_TX_BLOCK_HASH && SAMPLE_TX_HASH ? test : test.skip
   txExecutedTest('isTxExecutedInBlock', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.isTxExecutedInBlock({
+    const [err, res] = await to(testnetDaemonRPC.isTxExecutedInBlock({
       block_hash: SAMPLE_TX_BLOCK_HASH as string,
       tx_hash: SAMPLE_TX_HASH as string
     }))
@@ -337,15 +334,15 @@ describeDaemon('DaemonRPC', () => {
   })
 
   test('getAccountRegistrationTopoheight', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getAccountRegistrationTopoheight(MAINNET_ADDR))
+    const [err, res] = await to(testnetDaemonRPC.getAccountRegistrationTopoheight(TESTNET_ADDR))
     expect(err).toBeNull()
     console.log(res)
     expect(res)
   })
 
   test('isAccountRegistered', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.isAccountRegistered({
-      address: MAINNET_ADDR,
+    const [err, res] = await to(testnetDaemonRPC.isAccountRegistered({
+      address: TESTNET_ADDR,
       in_stable_height: true
     }))
     expect(err).toBeNull()
@@ -354,22 +351,24 @@ describeDaemon('DaemonRPC', () => {
   })
 
   test('getMempoolCache', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getMempoolCache(MAINNET_ADDR))
-    expect(err).toBeNull()
+    const [err, res] = await to(testnetDaemonRPC.getMempoolCache(TESTNET_ADDR))
+    // It's okay if account has no mempool cache (no pending transactions)
+    if (err) {
+      expect(err.message).toContain('Account not found')
+    }
     console.log(res)
-    expect(res)
   })
 
   test('getDifficulty', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.getDifficulty())
+    const [err, res] = await to(testnetDaemonRPC.getDifficulty())
     expect(err).toBeNull()
     console.log(res)
     expect(res)
   })
 
   test('validateAddress', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.validateAddress({
-      address: MAINNET_ADDR,
+    const [err, res] = await to(testnetDaemonRPC.validateAddress({
+      address: TESTNET_ADDR,
       allow_integrated: false
     }))
     expect(err).toBeNull()
@@ -378,8 +377,8 @@ describeDaemon('DaemonRPC', () => {
   })
 
   test('extractKeyFromAddress', async () => {
-    const [err, res] = await to(mainnetDaemonRPC.extractKeyFromAddress({
-      address: MAINNET_ADDR,
+    const [err, res] = await to(testnetDaemonRPC.extractKeyFromAddress({
+      address: TESTNET_ADDR,
       as_hex: true
     }))
     expect(err).toBeNull()

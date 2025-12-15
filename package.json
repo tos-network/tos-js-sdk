@@ -1,5 +1,5 @@
 {
-  "version": "0.9.21",
+  "version": "0.9.22",
   "name": "@tosnetwork/sdk",
   "description": "TOS Network software development kit for JS",
   "main": "./dist/cjs/daemon/rpc.js",

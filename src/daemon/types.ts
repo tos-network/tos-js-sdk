@@ -1,8 +1,8 @@
 export interface GetInfoResult {
-  // GHOSTDAG consensus metrics
-  blue_score: number // Current DAG depth (number of blue blocks)
+  // BlockDAG consensus metrics
+  height: number // Current chain height
   topoheight: number
-  stable_blue_score: number // Confirmed DAG depth
+  stable_height: number // Confirmed height
   pruned_topoheight?: number
   top_block_hash: string
 
@@ -44,7 +44,7 @@ export interface Block {
   version: number
   tips: string[]
   timestamp: number // in milliseconds
-  blue_score: number // DAG depth (number of blue blocks in GHOSTDAG past set)
+  height: number // Block height
   nonce: string
   extra_nonce: string
   miner: string
@@ -126,9 +126,9 @@ export interface TopoheightRangeParams {
   end_topoheight?: number
 }
 
-export interface BlueScoreRangeParams {
-  start_blue_score?: number
-  end_blue_score?: number
+export interface HeightRangeParams {
+  start_height?: number
+  end_height?: number
 }
 
 export interface RPCEventResult {
@@ -261,8 +261,8 @@ export interface GetBlockAtTopoheightParams {
   include_txs?: boolean
 }
 
-export interface GetBlocksAtBlueScoreParams {
-  blue_score: number
+export interface GetBlocksAtHeightParams {
+  height: number
   include_txs?: boolean
 }
 
@@ -444,19 +444,14 @@ export interface SplitAddressResult {
 export enum RPCMethod {
   GetVersion = 'get_version',
   GetInfo = 'get_info',
-  // FIXED: Changed from 'get_height' to 'get_blue_score' to match daemon API
-  // The daemon uses GHOSTDAG consensus where blue_score represents the DAG depth
-  GetHeight = 'get_blue_score',
+  GetHeight = 'get_height',
   GetTopoheight = 'get_topoheight',
-  // NOTE: get_stableheight is deprecated in daemon, but still supported for backward compatibility
-  // The preferred method is get_stable_blue_score
-  GetStableHeight = 'get_stable_blue_score',
+  GetStableHeight = 'get_stable_height',
   GetStableTopoheight = 'get_stable_topoheight',
   GetStableBalance = 'get_stable_balance',
   GetBlockTemplate = 'get_block_template',
   GetBlockAtTopoheight = 'get_block_at_topoheight',
-  // FIXED: Changed from 'get_blocks_at_height' to 'get_blocks_at_blue_score'
-  GetBlocksAtHeight = 'get_blocks_at_blue_score',
+  GetBlocksAtHeight = 'get_blocks_at_height',
   GetBlockByHash = 'get_block_by_hash',
   GetTopBlock = 'get_top_block',
   GetNonce = 'get_nonce',
@@ -476,8 +471,7 @@ export enum RPCMethod {
   GetTransaction = 'get_transaction',
   GetTransactions = 'get_transactions',
   GetBlocksRangeByTopoheight = 'get_blocks_range_by_topoheight',
-  // FIXED: Changed from 'get_blocks_range_by_height' to 'get_blocks_range_by_blue_score'
-  GetBlocksRangeByHeight = 'get_blocks_range_by_blue_score',
+  GetBlocksRangeByHeight = 'get_blocks_range_by_height',
   GetAccounts = 'get_accounts',
   SubmitBlock = 'submit_block',
   SubmitTransaction = 'submit_transaction',

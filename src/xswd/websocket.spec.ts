@@ -1,8 +1,7 @@
 import { to } from 'await-to-js'
 
 import { LOCAL_XSWD_WS } from '../config'
-import XSWD from '../xswd/websocket'
-import { ApplicationData } from './types'
+import XSWD, { XSWDAppConfig } from '../xswd/websocket'
 
 const RUN_XSWD_WS_TESTS = process.env.RUN_TOS_XSWD_WS_TESTS === 'true'
 const describeXSWD = RUN_XSWD_WS_TESTS ? describe : describe.skip
@@ -13,12 +12,11 @@ describeXSWD('XSWD_WS', () => {
     const [err] = await to(xswd.connect(LOCAL_XSWD_WS))
     expect(err).toBeNull()
 
-    const app = {
-      id: "9F86D081884C7D659A2FEAA0C55AD015A3BF4F1B2B0B822CD15D6C15B0F00A08",
+    const app: XSWDAppConfig = {
       name: "Test App",
       description: "This is a test app.",
-      permissions: new Map()
-    } as ApplicationData
+      permissions: ["get_address", "get_balance"]
+    }
 
     const [err2, res2] = await to(xswd.authorize(app))
     expect(err2).toBeNull()

@@ -1,8 +1,8 @@
 import {
-  Block, TopoheightRangeParams, GetInfoResult, BlueScoreRangeParams,
+  Block, TopoheightRangeParams, GetInfoResult, HeightRangeParams,
   GetBalanceResult, P2PStatusResult, RPCMethod, GetBalanceParams,
   GetBalanceAtTopoheightParams, GetAccountsParams, GetBlockAtTopoheightParams, GetBlockByHashParams,
-  GetBlocksAtBlueScoreParams, GetTopBlockParams, GetNonceResult, GetNonceParams, GetAccountHistoryParams,
+  GetBlocksAtHeightParams, GetTopBlockParams, GetNonceResult, GetNonceParams, GetAccountHistoryParams,
   AccountHistory, DevFee, DiskSize, HasBalanceParams, HasBalanceResult, AssetData, IsTxExecutedInBlockParams,
   GetAssetParams, GetPeersResult, GetBlockTemplateResult, VersionedBalance, VersionedNonce,
   GetNonceAtTopoheightParams, HasNonceParams, HasNonceResult, TransactionResponse,
@@ -19,11 +19,10 @@ export class RPC extends BaseRPC {
   }
 
   /**
-   * Get the current blue score (DAG depth) of the blockchain.
-   * This represents the number of blue blocks in the GHOSTDAG past set.
-   * @returns The current blue score
+   * Get the current height of the blockchain.
+   * @returns The current height
    */
-  getBlueScore() {
+  getHeight() {
     return this.call<number>(RPCMethod.GetHeight)
   }
 
@@ -36,10 +35,10 @@ export class RPC extends BaseRPC {
   }
 
   /**
-   * Get the stable blue score (confirmed DAG depth).
-   * @returns The stable blue score
+   * Get the stable height (confirmed height).
+   * @returns The stable height
    */
-  getStableBlueScore() {
+  getStableHeight() {
     return this.call<number>(RPCMethod.GetStableHeight)
   }
 
@@ -64,11 +63,11 @@ export class RPC extends BaseRPC {
   }
 
   /**
-   * Get blocks at a specific blue score (DAG depth).
-   * @param params Parameters with blue_score and optional include_txs
-   * @returns Array of blocks at the specified blue score
+   * Get blocks at a specific height.
+   * @param params Parameters with height and optional include_txs
+   * @returns Array of blocks at the specified height
    */
-  getBlocksAtBlueScore(params: GetBlocksAtBlueScoreParams) {
+  getBlocksAtHeight(params: GetBlocksAtHeightParams) {
     return this.call<Block[]>(RPCMethod.GetBlocksAtHeight, params)
   }
 
@@ -165,11 +164,11 @@ export class RPC extends BaseRPC {
   }
 
   /**
-   * Get blocks in a range by blue score (DAG depth).
-   * @param params Range parameters with start_blue_score and end_blue_score
+   * Get blocks in a range by height.
+   * @param params Range parameters with start_height and end_height
    * @returns Array of blocks in the specified range
    */
-  getBlocksRangeByBlueScore(params: BlueScoreRangeParams) {
+  getBlocksRangeByHeight(params: HeightRangeParams) {
     return this.call<Block[]>(RPCMethod.GetBlocksRangeByHeight, params)
   }
 
