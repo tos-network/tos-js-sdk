@@ -2,27 +2,55 @@
 
 TOS Network software development kit for JavaScript.
 
-**Version 0.9.22** - BlockDAG API
+**Version 0.9.23** - Smart Contract Support
 
 The SDK ships with handy constants for the public endpoints (`https://node.tos.network/json_rpc` for mainnet and `https://testnet.tos.network/json_rpc` for testnet) as well as the local defaults on `127.0.0.1`.
 
-## 🔄 What's New in v0.9.22
+## 🔄 What's New in v0.9.23
 
-Version 0.9.22 updates the API to use BlockDAG terminology:
+Version 0.9.23 adds comprehensive smart contract support and additional modules:
 
-**API Changes:**
-- `blue_score` → `height`
-- `stable_blue_score` → `stable_height`
-- `getBlueScore()` → `getHeight()`
-- `getStableBlueScore()` → `getStableHeight()`
-- `getBlocksAtBlueScore()` → `getBlocksAtHeight()`
-- `getBlocksRangeByBlueScore()` → `getBlocksRangeByHeight()`
-- `BlueScoreRangeParams` → `HeightRangeParams`
-- `GetBlocksAtBlueScoreParams` → `GetBlocksAtHeightParams`
+**New Modules:**
+- `address/` - TOS address encoding/decoding with bech32
+- `data/` - Data serialization (Value, Element types)
+- `contract/` - Smart contract interaction with typed ABI support
+- `xswd/relayer/` - XSWD relayer for cross-device wallet connections
 
-**Breaking Changes:**
-- All `blue_score` related APIs have been renamed to use `height`
-- Applications using the old API names will need to update their code
+**Contract Module Features:**
+- Type-safe contract method invocation
+- ABI-based parameter validation
+- Support for deposits with privacy options
+- Dynamic method generation from ABI
+
+**Example - Smart Contract Usage:**
+```js
+import { createTypedContract } from '@tosnetwork/sdk/contract/typed_contract'
+
+const routerABI = {
+  version: "1.0",
+  data: [
+    {
+      entry_id: 12,
+      name: "swap",
+      outputs: "u64",
+      params: [
+        { name: "tokenInHash", type: "Hash" },
+        { name: "tokenOutHash", type: "Hash" },
+        { name: "amountOutMin", type: "u64" }
+      ],
+      type: "entry"
+    }
+  ]
+}
+
+const router = createTypedContract(routerAddress, routerABI)
+const tx = router.swap({
+  tokenInHash: tokenA,
+  tokenOutHash: tokenB,
+  amountOutMin: 950000,
+  deposits: { [tokenA]: 1000000 }
+})
+```
 
 ## Install
 
