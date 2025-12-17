@@ -464,6 +464,7 @@ export enum RPCMethod {
   GetAssets = 'get_assets',
   CountAssets = 'count_assets',
   CountTransactions = 'count_transactions',
+  CountContracts = 'count_contracts',
   GetTips = 'get_tips',
   P2PStatus = 'p2p_status',
   GetDAGOrder = 'get_dag_order',

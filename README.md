@@ -2,13 +2,20 @@
 
 TOS Network software development kit for JavaScript.
 
-**Version 0.9.23** - Smart Contract Support
+**Version 0.9.24** - Contract Statistics Support
 
 The SDK ships with handy constants for the public endpoints (`https://node.tos.network/json_rpc` for mainnet and `https://testnet.tos.network/json_rpc` for testnet) as well as the local defaults on `127.0.0.1`.
 
-## 🔄 What's New in v0.9.23
+## 🔄 What's New in v0.9.24
 
-Version 0.9.23 adds comprehensive smart contract support and additional modules:
+Version 0.9.24 adds contract statistics support:
+
+**New RPC Methods:**
+- `countContracts()` - Get total number of deployed contracts on the network
+
+## 📦 v0.9.23 Features
+
+Version 0.9.23 added comprehensive smart contract support and additional modules:
 
 **New Modules:**
 - `address/` - TOS address encoding/decoding with bech32

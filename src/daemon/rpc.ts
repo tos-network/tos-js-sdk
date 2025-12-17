@@ -131,6 +131,10 @@ export class RPC extends BaseRPC {
     return this.call<number>(RPCMethod.CountTransactions)
   }
 
+  countContracts() {
+    return this.call<number>(RPCMethod.CountContracts)
+  }
+
   submitTransaction(hexData: string) {
     return this.call<boolean>(RPCMethod.SubmitTransaction, { data: hexData })
   }

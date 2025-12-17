@@ -202,6 +202,13 @@ describeDaemon('DaemonRPC', () => {
     expect(res)
   })
 
+  test('countContracts', async () => {
+    const [err, res] = await to(testnetDaemonRPC.countContracts())
+    expect(err).toBeNull()
+    console.log(res)
+    expect(res)
+  })
+
   test('getTips', async () => {
     const [err, res] = await to(testnetDaemonRPC.getTips())
     expect(err).toBeNull()

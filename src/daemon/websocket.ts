@@ -260,6 +260,10 @@ export class DaemonMethods {
     return this.dataCall<number>(RPCMethod.CountTransactions)
   }
 
+  countContracts() {
+    return this.dataCall<number>(RPCMethod.CountContracts)
+  }
+
   submitTransaction(hexData: string) {
     return this.dataCall<boolean>(RPCMethod.SubmitTransaction, { data: hexData })
   }
